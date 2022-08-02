@@ -141,8 +141,8 @@ void main() {
     try {
       throw UnsupportedError('test exception');
     } catch (error, stack) {
-      Logger.root.log(Level.SEVERE, 'severe', error, stack);
-      Logger.root.warning('warning', error, stack);
+      Logger.root.log(Level.SEVERE, 'severe', error: error, stackTrace: stack);
+      Logger.root.warning('warning', error: error, stackTrace: stack);
     }
 
     Logger.root.log(Level.SHOUT, 'shout');
@@ -165,6 +165,45 @@ void main() {
     expect(shout.message, 'shout');
     expect(shout.error, isNull);
     expect(shout.stackTrace, isNull);
+  });
+
+  test('attributes get passed to LogRecord', () {
+    Logger.root.level = Level.INFO;
+
+    var records = <LogRecord>[];
+
+    var sub = Logger.root.onRecord.listen(records.add);
+
+    final mapAttrs = {'a': 3};
+    final listAttrs = [1, 2, 3, 4];
+
+    try {
+      throw UnsupportedError('test exception');
+    } catch (_) {
+      Logger.root.log(Level.SEVERE, 'severe', attributes: mapAttrs);
+      Logger.root.warning('warning', attributes: mapAttrs);
+    }
+
+    Logger.root.log(Level.SHOUT, 'shout', attributes: listAttrs);
+
+    sub.cancel();
+
+    expect(records, hasLength(3));
+
+    var severe = records[0];
+    expect(severe.message, 'severe');
+    expect(severe.attributes is Map, isTrue);
+    expect(severe.attributes, equals(mapAttrs));
+
+    var warning = records[1];
+    expect(warning.message, 'warning');
+    expect(warning.attributes is Map, isTrue);
+    expect(warning.attributes, equals(mapAttrs));
+
+    var shout = records[2];
+    expect(shout.message, 'shout');
+    expect(shout.attributes is List, isTrue);
+    expect(shout.attributes, equals(listAttrs));
   });
 
   group('zone gets recorded to LogRecord', () {
@@ -207,7 +246,7 @@ void main() {
         recordingZone = Zone.current;
       });
 
-      runZoned(() => root.log(Level.INFO, 'hello', null, null, recordingZone));
+      runZoned(() => root.log(Level.INFO, 'hello', zone: recordingZone));
 
       expect(records, hasLength(1));
       expect(records.first.zone, equals(recordingZone));
@@ -449,14 +488,14 @@ void main() {
       root.warning('6');
       root.severe('7');
       root.shout('8');
-      root.finest('1', 'a');
-      root.finer('2', 'b');
-      root.fine('3', ['c']);
-      root.config('4', 'd');
-      root.info('5', 'e');
-      root.warning('6', 'f');
-      root.severe('7', 'g');
-      root.shout('8', 'h');
+      root.finest('1', error: 'a');
+      root.finer('2', error: 'b');
+      root.fine('3', error: ['c']);
+      root.config('4', error: 'd');
+      root.info('5', error: 'e');
+      root.warning('6', error: 'f');
+      root.severe('7', error: 'g');
+      root.shout('8', error: 'h');
 
       expect(
           rootMessages,
@@ -693,7 +732,7 @@ void main() {
       recordStackTraceAtLevel = Level.WARNING;
       root.onRecord.listen(records.add);
       root.severe('hello');
-      root.warning('hello', 'a', trace);
+      root.warning('hello', error: 'a', stackTrace: trace);
       expect(records, hasLength(2));
       expect(records[0].stackTrace, isNot(equals(trace)));
       expect(records[1].stackTrace, trace);

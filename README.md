@@ -47,7 +47,7 @@ Here is an example of logging a debug message and an error:
 var future = doSomethingAsync().then((result) {
   log.fine('Got the result: $result');
   processResult(result);
-}).catchError((e, stackTrace) => log.severe('Oh noes!', e, stackTrace));
+}).catchError((e, stackTrace) => log.severe('Oh noes!', error:e, stackTrace:stackTrace));
 ```
 
 When logging more complex messages, you can pass a closure instead that will be
@@ -55,6 +55,10 @@ evaluated only if the message is actually logged:
 
 ```dart
 log.fine(() => [1, 2, 3, 4, 5].map((e) => e * 4).join("-"));
+```
+Use attributes variable to pass extra attributes to your log.
+```dart
+log.info('[INFO]', attributes:{'a':3})
 ```
 
 Available logging methods are:
